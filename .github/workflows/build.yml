@@ -9,12 +9,14 @@ jobs:
     steps:
       - name: Checkout Repository master branch
         uses: actions/checkout@v4
-        with:
-          repository: NekoSuneVR/xmrig
-          ref: master  
 
       - name: Checkout dependencies
         run: git clone https://github.com/xmrig/xmrig-deps.git
+
+      - shell: powershell
+        run: |
+          (Get-Content src/donate.h) -replace 'DonateLevel = 1', 'DonateLevel = 0' | Set-Content src/donate.h
+
       - name: Build project on Windows
         run: |
           cmake . -G "MinGW Makefiles" -DXMRIG_DEPS=xmrig-deps\gcc\x64
@@ -39,9 +41,7 @@ jobs:
           sudo apt install -y git build-essential cmake libuv1-dev libssl-dev libhwloc-dev
       - name: Checkout Repository master branch
         uses: actions/checkout@v2
-        with:
-          repository: NekoSuneVR/xmrig
-          ref: master
+        
       - name: Build project on Ubuntu
         run: |
           echo "XMRIG_VERSION="`cat src/version.h | grep -Eo "APP_VERSION\s+\"(.+?)\"" | awk -F "\"" '{print $2}'` >> $GITHUB_ENV
@@ -50,6 +50,7 @@ jobs:
           make -j$(nproc)
           cp src/config.json .
           tar cfz ubuntu_buildamd.tar.gz xmrig config.json
+
       - name: Upload Ubuntu build artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -65,9 +66,6 @@ jobs:
           brew install cmake libuv openssl hwloc
       - name: Checkout Repository master branch
         uses: actions/checkout@v2
-        with:
-          repository: NekoSuneVR/xmrig
-          ref: master
 
       - name: Build hwloc on MacOS
         run: |
