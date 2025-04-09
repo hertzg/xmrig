@@ -33,7 +33,7 @@ jobs:
       
   build_linamd:
     name: Build Linux AMD artifacts
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Prepare Ubuntu tools
         run: |
@@ -56,6 +56,32 @@ jobs:
         with:
           name: ubuntu_buildamd
           path: ubuntu_buildamd.tar.gz
+
+  build_linarm:
+    name: Build Linux ARM artifacts
+    runs-on: ubuntu-22.04-arm
+    steps:
+      - name: Prepare Ubuntu tools
+        run: |
+          sudo apt update
+          sudo apt install -y git build-essential cmake libuv1-dev libssl-dev libhwloc-dev
+      - name: Checkout Repository master branch
+        uses: actions/checkout@v2
+        
+      - name: Build project on Ubuntu
+        run: |
+          echo "XMRIG_VERSION="`cat src/version.h | grep -Eo "APP_VERSION\s+\"(.+?)\"" | awk -F "\"" '{print $2}'` >> $GITHUB_ENV
+          sed -i 's/DonateLevel = 1/DonateLevel = 0/g' src/donate.h
+          cmake .
+          make -j$(nproc)
+          cp src/config.json .
+          tar cfz ubuntu_buildamd.tar.gz xmrig config.json
+
+      - name: Upload Ubuntu build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ubuntu_buildarm
+          path: ubuntu_buildarm.tar.gz
     
   build_macos:
     name: Build MacOS artifacts
